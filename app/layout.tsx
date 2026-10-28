@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Image from 'next/image'; 
+import { cookies } from "next/headers";
+import { getDatabase } from "@/lib/mongodb";
 
 // Initialize Poppins
 const poppins = Poppins({
@@ -16,11 +18,23 @@ export const metadata: Metadata = {
   description: "A secure, modern virtual wallet by LOGICMIND COMPUTERS.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("cpay_session")?.value;
+
+  let username = "User"
+
+  if (userId) {
+    const db = await getDatabase();
+    const user = await db.collection("users").findOne({userId});
+    if (user?.username) {
+      username = user.username.toUpperCase();
+    }
+  }
   return (
     <html lang="en" className={`${poppins.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
@@ -35,8 +49,8 @@ export default function RootLayout({
 
             {/* Profile Area - Right */}
             <div className="flex items-center gap-4 border-l pl-4 border-zinc-200 dark:border-zinc-800">
-              <span className="text-sm font-medium">Ari</span>
-              <Image src="/svg/profile.svg" alt="Ari's Profile" width="20" height="20" className="h-10 w-10 rounded-full object-cover invert" />
+              <span className="text-sm font-medium">{username}</span>
+              <Image src="/svg/profile.svg" alt="User Profile" width="20" height="20" className="h-10 w-10 rounded-full object-cover invert" />
             </div>
             
           </div>
