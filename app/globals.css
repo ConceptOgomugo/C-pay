@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+/* === THEME DEFINITION === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbfbfc; /* Clean, modern off-white */
+  --foreground: #111827; /* Dark text for readability */
+  --card: #ffffff;
+  --card-foreground: #111827;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  
+  /* Link the Poppins font variable to Tailwind's 'font-sans' utility */
+  --font-sans: var(--font-poppins);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #09090b; /* Deep background for dark mode */
+    --foreground: #f4f4f5;
+    --card: #18181b; /* Slightly lighter card background */
+    --card-foreground: #f4f4f5;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* === ENFORCE TYPOGRAPHY DEFAULTS (Overriding Tailwind Reset) === */
+/* Tailwind resets these to base size. We restore normal sizing here. */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold tracking-tight mt-0 mb-4 text-foreground;
+}
+
+h1 { @apply text-4xl md:text-5xl font-extrabold; } /* Major headers */
+h2 { @apply text-3xl md:text-4xl; }
+h3 { @apply text-2xl md:text-3xl; }
+h4 { @apply text-xl md:text-2xl; }
+h5 { @apply text-lg; }
+h6 { @apply text-base font-bold; }
+
+p {
+  @apply text-base leading-relaxed text-zinc-700 dark:text-zinc-300 mb-6;
+}
+
+strong, b {
+  @apply font-semibold text-zinc-900 dark:text-zinc-100;
+}
+
+small {
+  @apply text-sm text-zinc-500 dark:text-zinc-400;
+}
+
+/* === DEFINE SEMANTIC UI COMPONENTS === */
+@layer components {
+
+  /* --- C-Pay Standard Input Bar (Themed) --- */
+  /* Usage: className="cpay-input" */
+  .cpay-input {
+    @apply w-full h-12 px-4 rounded-xl border font-sans text-base transition-all duration-150 ease-in-out;
+    @apply bg-card text-foreground border-zinc-200 dark:border-zinc-800;
+    @apply placeholder:text-zinc-400 dark:placeholder:text-zinc-600;
+    
+    /* Standardized Focus State (The C-Pay blue glow) */
+    @apply focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 focus:border-teal-500 outline-none;
+    
+    /* Disabled State */
+    @apply disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-zinc-50 dark:disabled:bg-zinc-900;
+  }
+
+  /* --- C-Pay Primary Button --- */
+  .cpay-btn-primary {
+    @apply h-12 px-6 rounded-xl font-medium font-sans text-base inline-flex items-center justify-center gap-2 transition-all duration-150 ease-in-out cursor-pointer;
+    @apply bg-teal-600 text-white shadow-sm hover:bg-teal-700;
+    
+    /* Focus State */
+    @apply focus:ring-2 focus:ring-teal-300 dark:focus:ring-teal-800 outline-none;
+    
+    /* Active/Pressed State */
+    @apply active:scale-[0.98];
+    
+    /* Disabled State */
+    @apply disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-teal-600;
+  }
 }
