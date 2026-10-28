@@ -1,6 +1,14 @@
+import { cookies } from "next/headers";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("cpay_session");
+
+  if (!session) {
+    redirect("/login")
+  }
   return (
     <main className="max-w-4xl mx-auto space-y-8">
       

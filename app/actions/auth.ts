@@ -70,7 +70,7 @@ export async function Login(formData: FormData) {
 
   const cookieStore = await cookies();
   cookieStore.set({
-    name: "chatty_session",
+    name: "cpay_session",
     value: user.userId,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
