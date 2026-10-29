@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getDatabase } from "@/lib/mongodb";
 import WalletCard from "@/components/WalletCard";
+
+export const instant = false;
 
 export default async function Home() {
   const cookieStore = await cookies();
