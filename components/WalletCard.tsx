@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import DepositModal from "./DepositModal";
+import TransferModal from "./TransferModal";
 
 interface WalletCardProps {
   balance: number;
@@ -11,6 +12,7 @@ interface WalletCardProps {
 
 export default function WalletCard({ balance, userEmail }: WalletCardProps) {
   const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   return (
     <>
@@ -38,7 +40,11 @@ export default function WalletCard({ balance, userEmail }: WalletCardProps) {
             Deposit
           </button>
 
-          <button className="w-full sm:w-1/2 h-12 px-6 rounded-xl font-medium font-sans text-base inline-flex items-center justify-center gap-2 transition-all duration-150 ease-in-out cursor-pointer border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
+          {/* Clicking this button opens the Transfer Modal */}
+          <button 
+            onClick={() => setIsTransferOpen(true)}
+            className="w-full sm:w-1/2 h-12 px-6 rounded-xl font-medium font-sans text-base inline-flex items-center justify-center gap-2 transition-all duration-150 ease-in-out cursor-pointer border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
             </svg>
@@ -52,6 +58,12 @@ export default function WalletCard({ balance, userEmail }: WalletCardProps) {
         isOpen={isDepositOpen} 
         onClose={() => setIsDepositOpen(false)} 
         userEmail={userEmail} 
+      />
+
+      {/* The Transfer Modal */}
+      <TransferModal 
+        isOpen={isTransferOpen} 
+        onClose={() => setIsTransferOpen(false)} 
       />
     </>
   );
