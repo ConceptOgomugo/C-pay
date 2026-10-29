@@ -9,10 +9,10 @@ export default async function Home() {
   const session = cookieStore.get("cpay_session");
 
   if (!session) {
-    redirect("/login")
+    redirect("/login");
   }
 
-  // Fetch the logged-in user details to get their email and balance
+  // Fetch the logged-in user details
   const db = await getDatabase();
   const user = await db.collection("users").findOne({ userId: session.value });
 
@@ -20,13 +20,21 @@ export default async function Home() {
     redirect("/login");
   }
 
-  // Fetch their balance from the separate balances collection
+  // Fetch balance from the balances collection
   const balanceDoc = await db.collection("balances").findOne({ userId: user.userId });
   const currentBalance = balanceDoc?.balance ?? 0.00;
+
+  // Fetch real transaction history for this user, sorted newest first
+  const transactions = await db.collection("transactions")
+    .find({ userId: user.userId })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .toArray();
 
   return (
     <main className="max-w-4xl mx-auto space-y-8">
       
+      {/*WALLET BALANCE CARD COMPONENT*/}
       <WalletCard balance={currentBalance} userEmail={user.email} />
 
       {/*RECENT TRANSACTIONS*/}
@@ -48,29 +56,39 @@ export default async function Home() {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-sm">
               
-              {/* Row 1 */}
-              <tr>
-                <td className="py-4 font-medium text-zinc-900 dark:text-zinc-100">Paystack Deposit</td>
-                <td className="py-4 text-zinc-500">Deposit</td>
-                <td className="py-4 text-zinc-500">Oct 26</td>
-                <td className="py-4 font-semibold text-right text-emerald-600 dark:text-emerald-400">+250.00</td>
-              </tr>
-
-              {/* Row 2 */}
-              <tr>
-                <td className="py-4 font-medium text-zinc-900 dark:text-zinc-100">Transfer from Sarah Connor</td>
-                <td className="py-4 text-zinc-500">Transfer</td>
-                <td className="py-4 text-zinc-500">Oct 26</td>
-                <td className="py-4 font-semibold text-right text-emerald-600 dark:text-emerald-400">+13,000.00</td>
-              </tr>
-
-              {/* Row 3 */}
-              <tr>
-                <td className="py-4 font-medium text-zinc-900 dark:text-zinc-100">Transfer to David Chen</td>
-                <td className="py-4 text-zinc-500">Transfer</td>
-                <td className="py-4 text-zinc-500">Oct 26</td>
-                <td className="py-4 font-semibold text-right text-rose-600 dark:text-rose-400">-12,000.00</td>
-              </tr>
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-zinc-400">
+                    No transactions yet. Deposit or transfer funds to see history!
+                  </td>
+                </tr>
+              ) : (
+                transactions.map((tx) => {
+                  const isPositive = tx.amount > 0;
+                  return (
+                    <tr key={tx._id.toString()}>
+                      <td className="py-4 font-medium text-zinc-900 dark:text-zinc-100">
+                        {tx.description}
+                      </td>
+                      <td className="py-4 text-zinc-500">{tx.type}</td>
+                      <td className="py-4 text-zinc-500">
+                        {new Date(tx.createdAt).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric' 
+                        })}
+                      </td>
+                      <td className={`py-4 font-semibold text-right ${
+                        isPositive 
+                          ? "text-emerald-600 dark:text-emerald-400" 
+                          : "text-rose-600 dark:text-rose-400"
+                      }`}>
+                        {isPositive ? "+" : ""}₦{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
 
             </tbody>
           </table>
