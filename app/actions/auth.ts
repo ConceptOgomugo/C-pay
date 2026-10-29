@@ -58,20 +58,21 @@ export async function Login(formData: FormData) {
   const pin = formData.get("pin")?.toString();
 
   if (!email || !pin) {
-    throw new Error("Required");
+    return { success: false, message: "Required" };
   }
 
   const db = await getDatabase();
   const user = await db.collection("users").findOne({ email });
 
   if (!user) {
-    throw new Error("Incorrect Email");
+    return { success: false, message: "Account with this email does not exist." };
   }
 
   const validPin = await bcrypt.compare(pin, user.pin);
 
   if (!validPin) {
-    throw new Error("Incorrect Pin");
+    // CHANGE THIS FROM throwing an error to returning a clean response object
+    return { success: false, message: "Incorrect Pin" };
   }
 
   const cookieStore = await cookies();
@@ -85,4 +86,14 @@ export async function Login(formData: FormData) {
   });
 
   redirect("/");
+}
+
+export async function Logout() {
+  const cookieStore = await cookies();
+  
+  // Delete the session cookie
+  cookieStore.delete("cpay_session");
+
+  // Redirect back to the login page
+  redirect("/login");
 }
