@@ -34,6 +34,12 @@ export async function SignUp(formData: FormData) {
     createdAt: new Date(),
   });
 
+  await db.collection("balances").insertOne({
+    userId,
+    balance: 0.00,
+    updatedAt: new Date()
+  })
+
   const cookieStore = await cookies();
   cookieStore.set({
     name: "cpay_session",
