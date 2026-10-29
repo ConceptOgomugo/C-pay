@@ -62,18 +62,54 @@ export async function Login(formData: FormData) {
   }
 
   const db = await getDatabase();
-  const user = await db.collection("users").findOne({ email });
+  const usersCollection = db.collection("users");
+  const user = await usersCollection.findOne({ email });
 
   if (!user) {
     return { success: false, message: "Account with this email does not exist." };
   }
 
+  // 1. Check if the account is currently locked due to too many failed attempts
+  const now = new Date();
+  if (user.lockUntil && new Date(user.lockUntil) > now) {
+    const minutesLeft = Math.ceil((new Date(user.lockUntil).getTime() - now.getTime()) / 60000);
+    return { 
+      success: false, 
+      message: `Account temporarily locked. Try again in ${minutesLeft} minute(s).` 
+    };
+  }
+
+  // 2. Verify PIN
   const validPin = await bcrypt.compare(pin, user.pin);
 
   if (!validPin) {
-    // CHANGE THIS FROM throwing an error to returning a clean response object
-    return { success: false, message: "Incorrect Pin" };
+    // Increment failed attempts
+    const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+    
+    const updateData: any = { failedLoginAttempts: failedAttempts };
+
+    // If they fail 3 times, lock the account for 15 minutes
+    if (failedAttempts >= 3) {
+      const lockUntilDate = new Date(now.getTime() + 15 * 60000); // 15 mins from now
+      updateData.lockUntil = lockUntilDate;
+      
+      await usersCollection.updateOne({ email }, { $set: updateData });
+      return { 
+        success: false, 
+        message: "Too many failed attempts. Account locked for 15 minutes." 
+      };
+    }
+
+    // Otherwise, just update the failed attempts count and show remaining tries
+    await usersCollection.updateOne({ email }, { $set: updateData });
+    return { success: false, message: `Incorrect Pin. ${3 - failedAttempts} attempt(s) remaining.` };
   }
+
+  // 3. On successful login, reset failed attempts and lock fields
+  await usersCollection.updateOne(
+    { email },
+    { $set: { failedLoginAttempts: 0, lockUntil: null } }
+  );
 
   const cookieStore = await cookies();
   cookieStore.set({
@@ -85,7 +121,7 @@ export async function Login(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  redirect("/");
+  return { success: true };
 }
 
 export async function Logout() {
