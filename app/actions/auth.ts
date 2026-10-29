@@ -53,12 +53,12 @@ export async function SignUp(formData: FormData) {
   redirect("/");
 }
 
-export async function Login(formData: FormData) {
+export async function Login(prevState: any, formData: FormData) {
   const email = formData.get("email")?.toString().trim().toLowerCase();
   const pin = formData.get("pin")?.toString();
 
   if (!email || !pin) {
-    return { success: false, message: "Required" };
+    return { error: "Required" };
   }
 
   const db = await getDatabase();
@@ -66,7 +66,7 @@ export async function Login(formData: FormData) {
   const user = await usersCollection.findOne({ email });
 
   if (!user) {
-    return { success: false, message: "Account with this email does not exist." };
+    return { error: "Account with this email does not exist." };
   }
 
   // 1. Check if the account is currently locked due to too many failed attempts
@@ -74,8 +74,7 @@ export async function Login(formData: FormData) {
   if (user.lockUntil && new Date(user.lockUntil) > now) {
     const minutesLeft = Math.ceil((new Date(user.lockUntil).getTime() - now.getTime()) / 60000);
     return { 
-      success: false, 
-      message: `Account temporarily locked. Try again in ${minutesLeft} minute(s).` 
+      error: `Account temporarily locked. Try again in ${minutesLeft} minute(s).` 
     };
   }
 
@@ -95,14 +94,13 @@ export async function Login(formData: FormData) {
       
       await usersCollection.updateOne({ email }, { $set: updateData });
       return { 
-        success: false, 
-        message: "Too many failed attempts. Account locked for 15 minutes." 
+        error: "Too many failed attempts. Account locked for 15 minutes." 
       };
     }
 
-    // Otherwise, just update the failed attempts count and show remaining tries
+    // Otherwise, update failed attempts count and show remaining tries
     await usersCollection.updateOne({ email }, { $set: updateData });
-    return { success: false, message: `Incorrect Pin. ${3 - failedAttempts} attempt(s) remaining.` };
+    return { error: `Incorrect Pin. ${3 - failedAttempts} attempt(s) remaining.` };
   }
 
   // 3. On successful login, reset failed attempts and lock fields
@@ -121,7 +119,7 @@ export async function Login(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  return { success: true };
+  redirect("/");
 }
 
 export async function Logout() {
